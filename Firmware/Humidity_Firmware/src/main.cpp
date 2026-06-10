@@ -37,4 +37,4 @@ void loop() {
   Serial.print("Temperature: ");
   Serial.print(avg_temperature);
   Serial.println("°C");
-}
+} 
