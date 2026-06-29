@@ -7,7 +7,7 @@ float avg_humidity = 0.0;
 float avg_temperature = 0.0;
 int count = 0;
 
-void setup() {
+void setup() {  
   Serial.begin(115200);
   Serial.println("DHT22 Sensor Data");
 
@@ -15,7 +15,7 @@ void setup() {
 }
 
 void loop() {
-  delay(500);
+  delay(100);
 
   float humidity = dht.readHumidity();
   float temperature = dht.readTemperature();
@@ -32,9 +32,9 @@ void loop() {
   }
 
   Serial.print("Relative Humidity: ");
-  Serial.print(avg_humidity);
+  Serial.print(humidity);
   Serial.print("%  |  ");
   Serial.print("Temperature: ");
-  Serial.print(avg_temperature);
+  Serial.print(temperature);
   Serial.println("°C");
-} 
+}       
