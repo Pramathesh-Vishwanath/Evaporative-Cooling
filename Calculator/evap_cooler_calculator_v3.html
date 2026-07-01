@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaporative Cooler Trial Calculator v2 — Bengaluru</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f5f4f0; --surface:#fff; --surface-2:#f9f8f6;
+    --border:#e2e0d9; --border-strong:#c8c5bc;
+    --text:#1a1916; --text-sub:#5a5751; --text-muted:#9a978f;
+    --accent:#2563a8; --accent-bg:#eef3fb; --accent-border:#b8d0ef;
+    --warn:#92550a; --warn-bg:#fef3e2; --warn-border:#f0c87a;
+    --ok:#1a6b3a; --ok-bg:#eaf5ee; --ok-border:#86d4a2;
+    --danger:#b91c1c; --danger-bg:#fef2f2;
+    --mono:'Courier New',Courier,monospace;
+    --r:8px; --rl:12px;
+  }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; font-size:15px; line-height:1.6; }
+  .page { max-width:980px; margin:0 auto; padding:2rem 1.5rem 4rem; }
+  .header { border-bottom:1.5px solid var(--border-strong); padding-bottom:1.5rem; margin-bottom:2rem; }
+  .header h1 { font-size:24px; font-weight:600; letter-spacing:-0.3px; }
+  .header p  { color:var(--text-sub); font-size:14px; margin-top:4px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:2rem; }
+  .tab { padding:8px 18px; font-size:14px; font-weight:500; color:var(--text-sub); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; margin-bottom:-1px; border-radius:var(--r) var(--r) 0 0; transition:color .15s; }
+  .tab:hover { color:var(--text); background:var(--surface-2); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-pane { display:none; } .tab-pane.active { display:block; }
+  .sec { background:var(--surface); border:1px solid var(--border); border-radius:var(--rl); padding:1.25rem 1.5rem; margin-bottom:1rem; }
+  .sec-title { font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.85rem; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .g4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
+  @media(max-width:640px){ .g2,.g3,.g4{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:420px){ .g2,.g3,.g4{ grid-template-columns:1fr; } }
+  .f { display:flex; flex-direction:column; gap:4px; }
+  .f label { font-size:12px; color:var(--text-sub); font-weight:500; }
+  .f input { width:100%; padding:7px 10px; font-size:14px; border:1px solid var(--border-strong); border-radius:var(--r); background:var(--surface-2); color:var(--text); transition:border-color .15s; }
+  .f input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-bg); }
+  .f input[readonly] { background:#f0f4fa; color:var(--text-sub); cursor:not-allowed; border-style:dashed; border-color:var(--accent-border); }
+  .f .hint { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .badge { display:inline-block; font-size:10px; font-weight:600; padding:1px 7px; border-radius:20px; margin-top:3px; }
+  .badge-ok   { background:var(--ok-bg);     color:var(--ok);     border:1px solid var(--ok-border); }
+  .badge-warn { background:var(--warn-bg);   color:var(--warn);   border:1px solid var(--warn-border); }
+  .badge-info { background:var(--accent-bg); color:var(--accent); border:1px solid var(--accent-border); }
+  .badge-auto { background:#f0f4fa; color:#4a6fa5; border:1px solid #c0d4ee; }
+  .submit-bar { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--rl); padding:1rem 1.5rem; margin-bottom:1rem; }
+  .btn-calc { padding:10px 28px; font-size:15px; font-weight:600; background:var(--accent); color:#fff; border:none; border-radius:var(--r); cursor:pointer; transition:background .15s,transform .1s; }
+  .btn-calc:hover  { background:#1a4e90; }
+  .btn-calc:active { transform:scale(.97); }
+  .calc-status { font-size:13px; color:var(--text-muted); }
+  .calc-status.ok   { color:var(--ok); }
+  .calc-status.warn { color:var(--warn); }
+  .rl { font-size:13px; font-weight:600; color:var(--text-sub); margin:1rem 0 .5rem; }
+  .mc { background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r); padding:.85rem 1rem; }
+  .mc .label { font-size:12px; color:var(--text-sub); margin-bottom:3px; }
+  .mc .val   { font-size:22px; font-weight:600; }
+  .mc .unit  { font-size:12px; color:var(--text-muted); }
+  .mc .note  { font-size:11px; color:var(--text-muted); margin-top:3px; font-family:var(--mono); }
+  .c-blue  { color:var(--accent); } .c-green { color:var(--ok); } .c-warn { color:var(--warn); } .c-red { color:var(--danger); }
+  hr.d { border:none; border-top:1px solid var(--border); margin:1rem 0; }
+  .fbox { background:#f0f4fa; border-left:3px solid var(--accent); border-radius:0 var(--r) var(--r) 0; padding:.65rem 1rem; font-size:12px; color:var(--text-sub); font-family:var(--mono); line-height:1.9; margin-top:.65rem; white-space:pre-wrap; word-break:break-word; }
+  .tbl { width:100%; border-collapse:collapse; font-size:13px; margin-top:.5rem; }
+  .tbl th { font-size:11px; font-weight:600; color:var(--text-muted); text-align:left; padding:5px 10px; border-bottom:1px solid var(--border); }
+  .tbl td { padding:6px 10px; border-bottom:1px solid var(--border); }
+  .tbl tr:last-child td { border-bottom:none; }
+  .tbl tr.hi td { background:var(--warn-bg); }
+  .bar-track { height:8px; border-radius:4px; background:var(--border); margin-top:8px; overflow:hidden; }
+  .bar-fill  { height:100%; border-radius:4px; transition:width .4s,background .4s; }
+  .alert-banner { background:var(--accent-bg); border:1px solid var(--accent-border); border-radius:var(--r); padding:.6rem 1rem; font-size:12px; color:var(--accent); margin-bottom:12px; }
+  .alert-banner b { font-weight:600; }
+  /* Theory */
+  .theory { max-width:740px; }
+  .theory h2 { font-size:18px; font-weight:600; margin:2rem 0 .5rem; padding-bottom:.3rem; border-bottom:1px solid var(--border); }
+  .theory h2:first-child { margin-top:0; }
+  .theory h3 { font-size:15px; font-weight:600; color:var(--text-sub); margin:1.25rem 0 .35rem; }
+  .theory p  { color:var(--text-sub); margin-bottom:.75rem; line-height:1.75; }
+  .theory ul { color:var(--text-sub); padding-left:1.25rem; margin-bottom:.75rem; }
+  .theory li { margin-bottom:.35rem; line-height:1.7; }
+  .theory .eq { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:.65rem 1rem; font-family:var(--mono); font-size:13px; color:var(--text); margin:.5rem 0 .85rem; line-height:2.1; }
+  .theory .callout      { background:var(--accent-bg); border:1px solid var(--accent-border); border-radius:var(--r); padding:.75rem 1rem; font-size:13px; color:var(--accent); margin:.75rem 0; }
+  .theory .callout-warn { background:var(--warn-bg); border-color:var(--warn-border); color:var(--warn); }
+  .theory table    { width:100%; border-collapse:collapse; font-size:13px; margin:.5rem 0 1rem; }
+  .theory table th { background:var(--surface-2); font-weight:600; text-align:left; padding:6px 12px; border:1px solid var(--border); }
+  .theory table td { padding:6px 12px; border:1px solid var(--border); color:var(--text-sub); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <h1>Evaporative Cooler Trial Calculator <span style="font-size:13px;font-weight:400;color:var(--text-muted)">v2 · ASHRAE Psychrometric · Bengaluru 920 m</span></h1>
+  <p>ASHRAE Hyland-Wexler P<sub>sat</sub> · Altitude-corrected P<sub>atm</sub> · HR, h, ρ, v, T<sub>wb</sub>, T<sub>dp</sub> all auto-derived · Submit to calculate</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('calc',event)">Calculator</button>
+  <button class="tab"        onclick="switchTab('theory',event)">Theory &amp; Formulas</button>
+</div>
+
+<!-- ══════════════════════  CALCULATOR TAB  ══════════════════════ -->
+<div id="tab-calc" class="tab-pane active">
+
+  <div class="alert-banner">
+    <b>Altitude-corrected ASHRAE psychrometrics active.</b>
+    P<sub>atm</sub> is derived from your altitude input using the ASHRAE barometric formula (not hardcoded).
+    P<sub>sat</sub> uses the Hyland-Wexler equation (ASHRAE Fundamentals Ch.1).
+    HR, h, ρ, v, T<sub>wb</sub>, T<sub>dp</sub> all cascade from T<sub>db</sub> + RH — no manual entry needed for derived quantities.
+    At Bengaluru 920 m: P<sub>atm</sub> ≈ 90.75 kPa, ρ ≈ 1.017 kg/m³ — significantly different from sea-level defaults.
+  </div>
+
+  <!-- SITE & FAN -->
+  <div class="sec">
+    <p class="sec-title">Site &amp; Fan / Air Flow</p>
+    <div class="g4">
+      <div class="f">
+        <label>Site altitude (m) <b style="color:var(--accent)">★ key input</b></label>
+        <input id="altitude" type="number" value="920" step="10">
+        <span class="hint" id="patm_hint">P<sub>atm</sub>: computing…</span>
+      </div>
+      <div class="f">
+        <label>Sweep diameter (in)</label>
+        <input id="dia" type="number" value="9" step="0.1">
+        <span class="hint" id="area_hint">Area from ⌀: —</span>
+      </div>
+      <div class="f">
+        <label>Sweep area (m²)</label>
+        <input id="area" type="number" value="0.041" step="0.001">
+      </div>
+      <div class="f">
+        <label>Flow velocity (m/s)</label>
+        <input id="vel" type="number" value="3.2" step="0.1">
+        <span class="hint" id="va_hint">V<sub>a</sub> from A×v: —</span>
+      </div>
+    </div>
+    <div class="g4" style="margin-top:12px">
+      <div class="f">
+        <label>Volume flow V<sub>a</sub> (m³/s)</label>
+        <input id="va" type="number" value="0.13133" step="0.00001">
+      </div>
+      <div class="f">
+        <label>Air density ρ (kg/m³) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="rho" type="number" readonly>
+        <span class="badge badge-auto">from T<sub>db,in</sub> + altitude</span>
+      </div>
+      <div class="f">
+        <label>Mass flow M<sub>a</sub> (kg/s) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="ma" type="number" readonly>
+        <span class="badge badge-auto">V<sub>a</sub> × ρ</span>
+      </div>
+      <div class="f">
+        <label>Specific volume v (m³/kg) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="sv_in" type="number" readonly>
+        <span class="badge badge-auto">ASHRAE ideal gas</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- INLET -->
+  <div class="sec">
+    <p class="sec-title">Inlet Conditions — enter T<sub>db,in</sub> and RH<sub>in</sub> only</p>
+    <div class="g4">
+      <div class="f">
+        <label>T<sub>db,in</sub> (°C) — <em>measured</em></label>
+        <input id="tdb_in" type="number" value="28.4" step="0.1">
+      </div>
+      <div class="f">
+        <label>RH<sub>in</sub> (%) — <em>measured</em></label>
+        <input id="rh_in" type="number" value="70" step="0.1">
+        <span class="badge badge-ok">trusted sensor</span>
+      </div>
+      <div class="f">
+        <label>T<sub>wb,in</sub> (°C) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="twb_in" type="number" readonly>
+        <span class="badge badge-auto">Sprung iteration @ altitude P</span>
+      </div>
+      <div class="f">
+        <label>T<sub>dp,in</sub> (°C) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="tdp_in" type="number" readonly>
+        <span class="badge badge-auto">Magnus inversion</span>
+      </div>
+    </div>
+    <div class="g4" style="margin-top:12px">
+      <div class="f">
+        <label>HR<sub>in</sub> (g/kg) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="hr_in" type="number" readonly>
+        <span class="badge badge-auto">ASHRAE: 0.622×Pv/(P−Pv)</span>
+      </div>
+      <div class="f">
+        <label>h<sub>in</sub> (kJ/kg) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="h_in" type="number" readonly>
+        <span class="badge badge-auto">enthalpy eq</span>
+      </div>
+      <div class="f">
+        <label>P<sub>sat,in</sub> (kPa) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="psat_in" type="number" readonly>
+        <span class="badge badge-auto">Hyland-Wexler</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTLET -->
+  <div class="sec">
+    <p class="sec-title">Outlet Conditions — enter T<sub>db,out</sub> and RH<sub>out</sub> only</p>
+    <div class="g4">
+      <div class="f">
+        <label>T<sub>db,out</sub> (°C) — <em>measured</em></label>
+        <input id="tdb_out" type="number" value="25.5" step="0.1">
+      </div>
+      <div class="f">
+        <label>RH<sub>out</sub> (%) — <em>measured</em></label>
+        <input id="rh_out" type="number" value="90" step="0.1">
+        <span class="badge badge-warn">sensor drift likely at high RH</span>
+      </div>
+      <div class="f">
+        <label>T<sub>wb,out</sub> (°C) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="twb_out" type="number" readonly>
+        <span class="badge badge-auto">Sprung iteration @ altitude P</span>
+      </div>
+      <div class="f">
+        <label>T<sub>dp,out</sub> (°C) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="tdp_out" type="number" readonly>
+        <span class="badge badge-auto">Magnus inversion</span>
+      </div>
+    </div>
+    <div class="g4" style="margin-top:12px">
+      <div class="f">
+        <label>HR<sub>out,meas</sub> (g/kg) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="hr_out" type="number" readonly>
+        <span class="badge badge-warn">suspect — from RH<sub>out</sub></span>
+      </div>
+      <div class="f">
+        <label>h<sub>out,meas</sub> (kJ/kg) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="h_out" type="number" readonly>
+        <span class="badge badge-warn">from measured state</span>
+      </div>
+      <div class="f">
+        <label>P<sub>sat,out</sub> (kPa) <span style="color:var(--accent)">[auto]</span></label>
+        <input id="psat_out" type="number" readonly>
+        <span class="badge badge-auto">Hyland-Wexler</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WATER SUPPLY -->
+  <div class="sec">
+    <p class="sec-title">Water Supply</p>
+    <div class="g3">
+      <div class="f">
+        <label>Supply rate (g/hr)</label>
+        <input id="w_supply" type="number" value="300" step="10">
+        <span class="hint">Measured from tank / flowmeter</span>
+      </div>
+      <div class="f">
+        <label>T<sub>w,in</sub> — supply water temp (°C)</label>
+        <input id="tw_in" type="number" value="24" step="0.1">
+        <span class="hint">≈ T<sub>wb,in</sub> for open tank</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSTANTS -->
+  <div class="sec">
+    <p class="sec-title">Psychrometric Constants (ASHRAE standard)</p>
+    <div class="g4">
+      <div class="f">
+        <label>C<sub>p,a</sub> (kJ/kg·K)</label>
+        <input id="cpa" type="number" value="1.005" step="0.001">
+        <span class="hint">Standard: 1.005</span>
+      </div>
+      <div class="f">
+        <label>C<sub>p,v</sub> (kJ/kg·K)</label>
+        <input id="cpv" type="number" value="1.805" step="0.001">
+        <span class="hint">Standard: 1.805</span>
+      </div>
+      <div class="f">
+        <label>h<sub>fg</sub> @ ~25 °C (kJ/kg)</label>
+        <input id="hfg" type="number" value="2440" step="1">
+        <span class="hint">2440 @ 25°C · 2501 @ 0°C</span>
+      </div>
+      <div class="f">
+        <label>C<sub>p,w</sub> (kJ/kg·K)</label>
+        <input id="cpw" type="number" value="4.18" step="0.01">
+        <span class="hint">Standard: 4.18</span>
+      </div>
+    </div>
+    <div class="g2" style="margin-top:12px">
+      <div class="f">
+        <label>h<sub>fg,0</sub> @ 0°C (kJ/kg)</label>
+        <input id="hfg0" type="number" value="2501" step="1">
+        <span class="hint">Reference point for enthalpy eq: h = C<sub>p,a</sub>·T + HR·(h<sub>fg,0</sub> + C<sub>p,v</sub>·T)</span>
+      </div>
+      <div class="f">
+        <label>P<sub>atm</sub> (kPa) <span style="color:var(--accent)">[auto from altitude]</span></label>
+        <input id="patm" type="number" readonly>
+        <span class="badge badge-auto">ASHRAE barometric formula</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="submit-bar">
+    <button class="btn-calc" onclick="calc()">▶ Calculate</button>
+    <span class="calc-status" id="calc_status">Press Calculate to run the full psychrometric analysis.</span>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="sec" id="results_sec" style="display:none">
+    <p class="sec-title">Results</p>
+
+    <p class="rl">Psychrometric state — full derivation</p>
+    <div class="fbox" id="psychro_eq">—</div>
+
+    <hr class="d">
+
+    <p class="rl">Outlet correction — adiabatic (h = const) assumption</p>
+    <table class="tbl">
+      <thead>
+        <tr><th>Parameter</th><th>Measured (from RH<sub>out</sub> sensor)</th><th>Corrected (h = h<sub>in</sub>, T<sub>db,out</sub> trusted)</th><th>Difference</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>HR<sub>out</sub> (g/kg)</td><td id="r_hr_m">—</td><td id="r_hr_c" class="c-blue">—</td><td id="r_hr_d">—</td></tr>
+        <tr class="hi"><td>RH<sub>out</sub> (%)</td><td id="r_rh_m">—</td><td id="r_rh_c" class="c-green">—</td><td id="r_rh_d">—</td></tr>
+        <tr><td>h<sub>out</sub> (kJ/kg)</td><td id="r_h_m">—</td><td id="r_h_c">—</td><td id="r_h_d">—</td></tr>
+      </tbody>
+    </table>
+    <div class="fbox" id="corr_eq">—</div>
+
+    <hr class="d">
+
+    <p class="rl">Water evaporation rate</p>
+    <div class="g3">
+      <div class="mc">
+        <div class="label">Method 1a — ΔHR<sub>measured</sub> × M<sub>a</sub></div>
+        <div class="val c-blue" id="mw1a">—</div>
+        <div class="unit">g/hr</div>
+        <div class="note" id="mw1a_note">—</div>
+      </div>
+      <div class="mc">
+        <div class="label">Method 1b — ΔHR<sub>corrected</sub> × M<sub>a</sub></div>
+        <div class="val c-green" id="mw1b">—</div>
+        <div class="unit">g/hr</div>
+        <div class="note" id="mw1b_note">—</div>
+      </div>
+      <div class="mc">
+        <div class="label">Method 2 — Sensible heat balance</div>
+        <div class="val" id="mw2">—</div>
+        <div class="unit">g/hr</div>
+        <div class="note" id="mw2_note">—</div>
+      </div>
+    </div>
+    <div class="fbox" id="m2_box">—</div>
+
+    <hr class="d">
+
+    <p class="rl">Convergence &amp; Effectiveness</p>
+    <div class="g3">
+      <div class="mc">
+        <div class="label">M1a vs M2 — deviation</div>
+        <div class="val" id="dev1">—</div><div class="unit">%</div>
+      </div>
+      <div class="mc">
+        <div class="label">M1b vs M2 — deviation</div>
+        <div class="val" id="dev2">—</div><div class="unit">%</div>
+        <div class="note">Lower = better</div>
+      </div>
+      <div class="mc">
+        <div class="label">Saturation effectiveness η</div>
+        <div class="val" id="eta">—</div>
+        <div class="unit">%  (ΔT = <span id="dT_val">—</span> / <span id="dT_max">—</span> °C)</div>
+      </div>
+    </div>
+
+    <hr class="d">
+
+    <p class="rl">Water supply check</p>
+    <div class="g3">
+      <div class="mc"><div class="label">Supply rate</div><div class="val" id="ws_val">—</div><div class="unit">g/hr</div></div>
+      <div class="mc"><div class="label">Evap rate (M1b)</div><div class="val" id="we_val">—</div><div class="unit">g/hr</div></div>
+      <div class="mc"><div class="label">Evap / Supply ratio</div><div class="val" id="ratio_val">—</div></div>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="bar_fill" style="width:0%"></div></div>
+    <p class="hint" id="supply_note" style="margin-top:6px">—</p>
+  </div>
+
+</div><!-- end tab-calc -->
+
+
+<!-- ══════════════════════  THEORY TAB  ══════════════════════ -->
+<div id="tab-theory" class="tab-pane">
+<div class="theory">
+
+  <h2>Why altitude matters — the Bengaluru correction</h2>
+  <p>Bengaluru sits at ~920 m above sea level. The ASHRAE barometric formula gives P<sub>atm</sub> ≈ 90.75 kPa — about 10.4% below sea-level standard (101.325 kPa). This is not a small correction:</p>
+  <table>
+    <tr><th>Property</th><th>Sea level (101.325 kPa)</th><th>Bengaluru 920 m (90.75 kPa)</th><th>Error if ignored</th></tr>
+    <tr><td>HR @ 28.4°C / 70% RH</td><td>17.09 g/kg</td><td>19.15 g/kg</td><td>+12%</td></tr>
+    <tr><td>h @ same state</td><td>72.17 kJ/kg</td><td>77.41 kJ/kg</td><td>+7.3%</td></tr>
+    <tr><td>Air density ρ</td><td>~1.157 kg/m³</td><td>~1.017 kg/m³</td><td>−12%</td></tr>
+    <tr><td>Specific volume v</td><td>~0.864 m³/kg</td><td>~0.983 m³/kg</td><td>+14%</td></tr>
+  </table>
+  <p>Using sea-level defaults (as in many online tools and textbook tables) in Bengaluru will underestimate humidity ratio and enthalpy by 7–12%, and overestimate air density by ~12%. All evaporation rate calculations directly inherit this error.</p>
+
+  <h2>ASHRAE barometric pressure formula</h2>
+  <div class="eq">P_atm(Z) = 101.325 × (1 − 2.25577×10⁻⁵ × Z)^5.2559   [kPa]
+
+Where Z = elevation above sea level in metres.
+At Z = 920 m:  P_atm = 101.325 × (1 − 2.25577×10⁻⁵ × 920)^5.2559
+             = 101.325 × (0.97924)^5.2559
+             = 90.75 kPa</div>
+  <p>This is from ASHRAE Handbook of Fundamentals, Chapter 1 (Standard Atmosphere). It supersedes the simple approximation P ≈ 101.325 − 0.012 × Z that appears in some older references.</p>
+
+  <h2>Hyland-Wexler saturation pressure (ASHRAE Ch.1)</h2>
+  <p>Above 0°C, ASHRAE uses the Hyland-Wexler equation for saturation vapour pressure, which is traceable to ITS-90 and matches CoolProp to within display precision across the HVAC range:</p>
+  <div class="eq">ln(P_ws) = C8/T + C9 + C10·T + C11·T² + C12·T³ + C13·ln(T)   [Pa, T in Kelvin]
+
+C8  = −5.8002206 × 10³
+C9  =  1.3914993
+C10 = −4.8640239 × 10⁻²
+C11 =  4.1764768 × 10⁻⁵
+C12 = −1.4452093 × 10⁻⁸
+C13 =  6.5459673
+
+P_sat(kPa) = exp(ln(P_ws)) / 1000</div>
+  <p>The simpler Antoine equation (0.6108 × exp(17.27T/(T+237.3))) differs by only 0.04–0.09% in the 25–35°C range, so for most trial accuracy it would not matter. The Hyland-Wexler is used here for full ASHRAE traceability.</p>
+
+  <h2>Humidity ratio (ASHRAE definition)</h2>
+  <div class="eq">HR = 0.622 × P_v / (P_atm − P_v)   [kg water / kg dry air]
+
+Where:
+  P_v = (RH/100) × P_sat(T_db)   [kPa]  (actual vapour pressure)
+  0.622 = M_water / M_dry_air = 18.015 / 28.966
+
+HR_g = HR × 1000   [g/kg]</div>
+  <p>Note: at lower P_atm (Bengaluru), the denominator (P_atm − P_v) is smaller, so HR is larger for the same T_db and RH. This is why high-altitude air is "thinner" but carries more moisture by mass per kg of dry air.</p>
+
+  <h2>Specific enthalpy</h2>
+  <div class="eq">h = C_p,a × T_db + HR × (h_fg,0 + C_p,v × T_db)   [kJ/kg dry air]
+
+C_p,a  = 1.005 kJ/kg·K
+C_p,v  = 1.805 kJ/kg·K
+h_fg,0 = 2501  kJ/kg  (latent heat at 0°C reference)</div>
+  <p>Since HR is larger at altitude, enthalpy is also larger. The correction flows automatically once P_atm is correct.</p>
+
+  <h2>Specific volume and air density</h2>
+  <div class="eq">v = R_da × T_K / (P_atm − P_v)   [m³/kg dry air]
+
+R_da = 0.2870 kJ/(kg·K)  (specific gas constant of dry air)
+T_K  = T_db + 273.15     [Kelvin]
+
+ρ = 1/v   [kg/m³]</div>
+  <p>At Bengaluru: ρ ≈ 1.017 kg/m³ for typical inlet conditions. Using the often-cited sea-level default of 1.15–1.20 kg/m³ will overestimate mass flow rate M_a = V_a × ρ by ~12–18%, directly inflating all evaporation rate results.</p>
+
+  <h2>Wet-bulb temperature — iterative Sprung</h2>
+  <p>T<sub>wb</sub> is solved from the psychrometric equation:</p>
+  <div class="eq">HR = HR_sat(T_wb) − A × (T_db − T_wb)
+
+HR_sat(T_wb) = 0.622 × P_sat(T_wb) / (P_atm − P_sat(T_wb))
+A = 6.6×10⁻⁴ /°C  (Sprung, ventilated psychrometer constant)</div>
+  <p>Since P_sat(T_wb) is nonlinear in T_wb, this is solved by Newton-Raphson iteration. P_atm appears in HR_sat, so the Bengaluru pressure shifts T_wb as well (by ~0.3–0.5°C relative to sea level). This is equivalent to reading T_wb off an altitude-corrected psychrometric chart.</p>
+
+  <h2>Dew-point — Magnus inversion</h2>
+  <div class="eq">γ = 17.27 × T_db / (T_db + 237.3) + ln(RH/100)
+T_dp = 237.3 × γ / (17.27 − γ)   [°C]</div>
+  <p>Dew point is independent of P_atm (it depends only on the actual vapour pressure P_v = RH/100 × P_sat, and P_sat depends only on T_db).</p>
+
+  <h2>Evaporation — Method 1</h2>
+  <div class="eq">M_w = (HR_out − HR_in) × M_a   [kg/s]   → × 1000 × 3600 → [g/hr]</div>
+  <p>1a uses measured HR_out (suspect); 1b uses corrected HR_out from h = const assumption.</p>
+
+  <h2>Evaporation — Method 2 (sensible heat balance)</h2>
+  <div class="eq">M_w = [M_a × C_p,a × (T_db,in − T_db,out)] / [h_fg + C_p,w × (T_wb,in − T_w,in)]</div>
+  <p>T<sub>wb,in</sub> here is the altitude-corrected psychrometric wet-bulb, not a manually entered guess.</p>
+
+  <h2>Saturation effectiveness</h2>
+  <div class="eq">η = (T_db,in − T_db,out) / (T_db,in − T_wb,in) × 100   [%]</div>
+  <p>T<sub>wb,in</sub> is computed psychrometrically at Bengaluru altitude — making this a true thermodynamic effectiveness, not an approximation.</p>
+
+  <h2>Symbol table</h2>
+  <table>
+    <tr><th>Symbol</th><th>Meaning</th><th>Unit</th></tr>
+    <tr><td>Z</td><td>Site elevation</td><td>m</td></tr>
+    <tr><td>P<sub>atm</sub></td><td>Atmospheric pressure (altitude-corrected)</td><td>kPa</td></tr>
+    <tr><td>P<sub>sat</sub></td><td>Saturation vapour pressure (Hyland-Wexler)</td><td>kPa</td></tr>
+    <tr><td>HR</td><td>Humidity ratio</td><td>g/kg</td></tr>
+    <tr><td>h</td><td>Specific enthalpy</td><td>kJ/kg</td></tr>
+    <tr><td>v</td><td>Specific volume</td><td>m³/kg</td></tr>
+    <tr><td>ρ</td><td>Air density = 1/v</td><td>kg/m³</td></tr>
+    <tr><td>T<sub>wb</sub></td><td>Wet-bulb (Sprung iteration)</td><td>°C</td></tr>
+    <tr><td>T<sub>dp</sub></td><td>Dew-point (Magnus inversion)</td><td>°C</td></tr>
+    <tr><td>η</td><td>Saturation effectiveness</td><td>%</td></tr>
+    <tr><td>M<sub>a</sub></td><td>Mass flow of dry air</td><td>kg/s</td></tr>
+    <tr><td>M<sub>w</sub></td><td>Water evaporation rate</td><td>g/hr</td></tr>
+  </table>
+
+</div>
+</div><!-- end tab-theory -->
+
+</div><!-- end page -->
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(name, ev) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if (ev && ev.target) ev.target.classList.add('active');
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const gv   = id => parseFloat(document.getElementById(id).value) || 0;
+const setV = (id, v, dec) => { document.getElementById(id).value = (isFinite(v) ? (+v).toFixed(dec||3) : '—'); };
+const setT = (id, v) => { document.getElementById(id).textContent = v; };
+
+// ── ASHRAE barometric formula ──────────────────────────────────────────────
+function patmFromAlt(Z) {
+  return 101.325 * Math.pow(1 - 2.25577e-5 * Z, 5.2559);
+}
+
+// ── Hyland-Wexler saturation pressure, T in °C → kPa ─────────────────────
+function psatHW(T_C) {
+  const T = T_C + 273.15;
+  const lnP = -5.8002206e3/T + 1.3914993 - 4.8640239e-2*T
+              + 4.1764768e-5*T*T - 1.4452093e-8*T*T*T
+              + 6.5459673*Math.log(T);
+  return Math.exp(lnP) / 1000; // Pa → kPa
+}
+
+// ── HR from RH, Tdb, Patm [kg/kg] ─────────────────────────────────────────
+function HR_from_RH(T, RH, P) {
+  const Ps = psatHW(T);
+  const Pv = (RH/100) * Ps;
+  if (P - Pv <= 0) return 0;
+  return 0.622 * Pv / (P - Pv);
+}
+
+// ── Enthalpy [kJ/kg dry air] ───────────────────────────────────────────────
+function enthalpy(T, HR_kgkg, Cpa, Cpv, hfg0) {
+  return Cpa * T + HR_kgkg * (hfg0 + Cpv * T);
+}
+
+// ── Specific volume [m³/kg dry air] ───────────────────────────────────────
+// v = R_da × T_K / (P_atm − P_v)
+function specVol(T_C, RH, P) {
+  const Ps = psatHW(T_C);
+  const Pv = (RH/100) * Ps;
+  const Pda = P - Pv;
+  if (Pda <= 0) return 0;
+  return 0.2870 * (T_C + 273.15) / Pda;
+}
+
+// ── Wet-bulb — Newton-Raphson on Sprung equation ──────────────────────────
+function wetBulb(Tdb, HR_kgkg, P) {
+  const A = 6.6e-4;
+  let Twb = Tdb - 4;
+  for (let i = 0; i < 50; i++) {
+    const Ps  = psatHW(Twb);
+    if (P - Ps <= 0) break;
+    const HRs = 0.622 * Ps / (P - Ps);
+    const f   = HRs - A*(Tdb - Twb) - HR_kgkg;
+    // dHRs/dTwb via chain rule through HW equation
+    const dPs = Ps * 17.27*237.3 / Math.pow(Twb+237.3, 2); // Antoine derivative ≈ OK here
+    const dHRs = 0.622 * P * dPs / Math.pow(P - Ps, 2);
+    const df  = dHRs + A;
+    const dT  = f / df;
+    Twb -= dT;
+    if (Math.abs(dT) < 1e-7) break;
+  }
+  return Twb;
+}
+
+// ── Dew-point — Magnus inversion ──────────────────────────────────────────
+function dewPoint(T, RH) {
+  const g = 17.27*T/(T+237.3) + Math.log(RH/100);
+  return 237.3*g/(17.27-g);
+}
+
+// ── RH from HR at given T, P ──────────────────────────────────────────────
+function RH_from_HR(T, HR_kgkg, P) {
+  const Ps = psatHW(T);
+  return HR_kgkg * P / ((0.622 + HR_kgkg) * Ps) * 100;
+}
+
+// ── Live preview — update all derived (readonly) fields ───────────────────
+function updateDerived() {
+  const alt  = gv('altitude') || 920;
+  const P    = patmFromAlt(alt);
+  const Cpa  = gv('cpa')  || 1.005;
+  const Cpv  = gv('cpv')  || 1.805;
+  const hfg0 = gv('hfg0') || 2501;
+
+  // P_atm
+  setV('patm', P, 4);
+  document.getElementById('patm_hint').textContent = 'P_atm at ' + alt + ' m: ' + P.toFixed(2) + ' kPa';
+
+  // Inlet
+  const Tdb_in = gv('tdb_in'); const RH_in = gv('rh_in');
+  if (Tdb_in && RH_in) {
+    const HR_in = HR_from_RH(Tdb_in, RH_in, P);
+    const h_in  = enthalpy(Tdb_in, HR_in, Cpa, Cpv, hfg0);
+    const v_in  = specVol(Tdb_in, RH_in, P);
+    const Twb_in = wetBulb(Tdb_in, HR_in, P);
+    const Tdp_in = dewPoint(Tdb_in, RH_in);
+    const Ps_in  = psatHW(Tdb_in);
+    setV('hr_in',   HR_in*1000, 3);
+    setV('h_in',    h_in, 3);
+    setV('twb_in',  Twb_in, 2);
+    setV('tdp_in',  Tdp_in, 2);
+    setV('psat_in', Ps_in, 4);
+    setV('sv_in',   v_in, 4);
+    setV('rho',     1/v_in, 4);
+    const va = gv('va');
+    setV('ma', va * (1/v_in), 4);
+  }
+
+  // Outlet
+  const Tdb_out = gv('tdb_out'); const RH_out = gv('rh_out');
+  if (Tdb_out && RH_out) {
+    const HR_out = HR_from_RH(Tdb_out, RH_out, P);
+    const h_out  = enthalpy(Tdb_out, HR_out, Cpa, Cpv, hfg0);
+    const Twb_out = wetBulb(Tdb_out, HR_out, P);
+    const Tdp_out = dewPoint(Tdb_out, RH_out);
+    const Ps_out  = psatHW(Tdb_out);
+    setV('hr_out',   HR_out*1000, 3);
+    setV('h_out',    h_out, 3);
+    setV('twb_out',  Twb_out, 2);
+    setV('tdp_out',  Tdp_out, 2);
+    setV('psat_out', Ps_out, 4);
+  }
+
+  // Fan hints
+  const dia  = gv('dia'); const area = gv('area'); const vel = gv('vel');
+  document.getElementById('area_hint').textContent = 'Area from ⌀: ' + (Math.PI/4*Math.pow(dia*0.0254,2)).toFixed(4) + ' m²';
+  document.getElementById('va_hint').textContent   = 'V_a from A×v: ' + (area*vel).toFixed(5) + ' m³/s';
+}
+
+// ── Main calc (on Submit) ─────────────────────────────────────────────────
+function calc() {
+  updateDerived();
+
+  const alt  = gv('altitude') || 920;
+  const P    = patmFromAlt(alt);
+  const Cpa  = gv('cpa')  || 1.005;
+  const Cpv  = gv('cpv')  || 1.805;
+  const hfg  = gv('hfg')  || 2440;
+  const Cpw  = gv('cpw')  || 4.18;
+  const hfg0 = gv('hfg0') || 2501;
+
+  const Tdb_in  = gv('tdb_in');  const RH_in  = gv('rh_in');
+  const Tdb_out = gv('tdb_out'); const RH_out = gv('rh_out');
+  const Tw_in   = gv('tw_in');   const w_supply = gv('w_supply');
+
+  // Inlet derived
+  const Ps_in   = psatHW(Tdb_in);
+  const HR_in   = HR_from_RH(Tdb_in, RH_in, P);   // kg/kg
+  const HR_in_g = HR_in * 1000;
+  const h_in    = enthalpy(Tdb_in, HR_in, Cpa, Cpv, hfg0);
+  const Twb_in  = wetBulb(Tdb_in, HR_in, P);
+  const Tdp_in  = dewPoint(Tdb_in, RH_in);
+  const v_in    = specVol(Tdb_in, RH_in, P);
+  const rho     = 1/v_in;
+
+  // Outlet derived (measured, suspect RH)
+  const Ps_out   = psatHW(Tdb_out);
+  const HR_out_m = HR_from_RH(Tdb_out, RH_out, P); // kg/kg measured
+  const HR_out_g = HR_out_m * 1000;
+  const h_out_m  = enthalpy(Tdb_out, HR_out_m, Cpa, Cpv, hfg0);
+  const Twb_out  = wetBulb(Tdb_out, HR_out_m, P);
+
+  // Mass flow
+  const va = gv('va');
+  const ma = va * rho;
+
+  // Adiabatic correction
+  const HR_corr   = (h_in - Cpa*Tdb_out) / (hfg0 + Cpv*Tdb_out); // kg/kg
+  const HR_corr_g = HR_corr * 1000;
+  const RH_corr   = RH_from_HR(Tdb_out, HR_corr, P);
+  const dh        = h_out_m - h_in;
+
+  // Fill psychro derivation box
+  document.getElementById('psychro_eq').textContent =
+    '── Site: ' + alt + ' m ──  P_atm = 101.325 × (1−2.25577e-5×'+alt+')^5.2559 = ' + P.toFixed(4) + ' kPa\n\n' +
+    '── Inlet (T_db=' + Tdb_in + '°C, RH=' + RH_in + '%) ──\n' +
+    '  P_sat [Hyland-Wexler] = ' + Ps_in.toFixed(4) + ' kPa\n' +
+    '  P_v   = RH/100 × P_sat = ' + (RH_in/100*Ps_in).toFixed(4) + ' kPa\n' +
+    '  HR_in = 0.622 × P_v / (P_atm − P_v) = ' + HR_in_g.toFixed(3) + ' g/kg\n' +
+    '  h_in  = ' + Cpa + '×' + Tdb_in + ' + ' + HR_in_g.toFixed(3) + '/1000 × (' + hfg0 + ' + ' + Cpv + '×' + Tdb_in + ') = ' + h_in.toFixed(3) + ' kJ/kg\n' +
+    '  v_in  = 0.2870 × ' + (Tdb_in+273.15).toFixed(2) + ' / (P_atm − P_v) = ' + v_in.toFixed(4) + ' m³/kg  →  ρ = ' + rho.toFixed(4) + ' kg/m³\n' +
+    '  T_wb,in = ' + Twb_in.toFixed(2) + ' °C  [Newton-Raphson Sprung @ P_atm=' + P.toFixed(2) + ' kPa]\n' +
+    '  T_dp,in = ' + Tdp_in.toFixed(2) + ' °C  [Magnus inversion]\n' +
+    '  M_a = V_a × ρ = ' + va + ' × ' + rho.toFixed(4) + ' = ' + ma.toFixed(4) + ' kg/s\n\n' +
+    '── Outlet measured (T_db=' + Tdb_out + '°C, RH=' + RH_out + '%) ──\n' +
+    '  P_sat [Hyland-Wexler] = ' + Ps_out.toFixed(4) + ' kPa\n' +
+    '  HR_out,meas = ' + HR_out_g.toFixed(3) + ' g/kg  [SUSPECT — sensor drift at high RH]\n' +
+    '  h_out,meas  = ' + h_out_m.toFixed(3) + ' kJ/kg\n' +
+    '  Δh = h_out − h_in = ' + (dh>=0?'+':'') + dh.toFixed(3) + ' kJ/kg  ' +
+    (Math.abs(dh)<3 ? '(✓ near-adiabatic)' : '(⚠ significant deviation — verify sensors)');
+
+  // Correction table
+  setT('r_hr_m', HR_out_g.toFixed(2) + ' g/kg');
+  setT('r_hr_c', HR_corr_g.toFixed(2) + ' g/kg');
+  setT('r_hr_d', (HR_corr_g-HR_out_g>=0?'+':'') + (HR_corr_g-HR_out_g).toFixed(2) + ' g/kg');
+  setT('r_rh_m', RH_out.toFixed(1) + '% (sensor)');
+  setT('r_rh_c', RH_corr.toFixed(1) + '%');
+  setT('r_rh_d', (RH_corr-RH_out>=0?'+':'') + (RH_corr-RH_out).toFixed(1) + '%');
+  setT('r_h_m',  h_out_m.toFixed(3) + ' kJ/kg');
+  setT('r_h_c',  h_in.toFixed(3) + ' kJ/kg (= h_in)');
+  setT('r_h_d',  (dh>=0?'+':'') + dh.toFixed(3) + ' kJ/kg');
+
+  document.getElementById('corr_eq').textContent =
+    'h_in (altitude-corrected) = ' + h_in.toFixed(3) + ' kJ/kg\n' +
+    'Set h_out = h_in and solve for HR at T_db,out:\n' +
+    '  HR_corr = (h_in − C_p,a × T_db,out) / (h_fg,0 + C_p,v × T_db,out)\n' +
+    '          = (' + h_in.toFixed(3) + ' − ' + Cpa + '×' + Tdb_out + ') / (' + hfg0 + ' + ' + Cpv + '×' + Tdb_out + ')\n' +
+    '          = ' + HR_corr_g.toFixed(4) + ' g/kg\n\n' +
+    'Convert HR_corr → RH_corr:\n' +
+    '  P_sat(' + Tdb_out + '°C) = ' + Ps_out.toFixed(4) + ' kPa  [Hyland-Wexler]\n' +
+    '  RH_corr = HR_corr × P_atm / ((0.622 + HR_corr) × P_sat) × 100\n' +
+    '          = ' + RH_corr.toFixed(1) + '%\n\n' +
+    'Sensor RH_out = ' + RH_out.toFixed(1) + '% vs Corrected = ' + RH_corr.toFixed(1) + '% → diff = ' + (RH_corr-RH_out).toFixed(1) + '%';
+
+  // Method 1a
+  const dHR_m = HR_out_g - HR_in_g;
+  const mw1a  = (dHR_m/1000) * ma * 3600 * 1000;
+  // Method 1b
+  const dHR_c = HR_corr_g - HR_in_g;
+  const mw1b  = (dHR_c/1000) * ma * 3600 * 1000;
+  // Method 2
+  const Q_air   = ma * Cpa * (Tdb_in - Tdb_out);
+  const h_water = hfg + Cpw * (Twb_in - Tw_in);
+  const mw2     = h_water > 0 ? (Q_air/h_water)*3600*1000 : 0;
+
+  setT('mw1a', mw1a.toFixed(1));
+  document.getElementById('mw1a_note').textContent = 'ΔHR_meas=' + dHR_m.toFixed(3) + ' g/kg × Ma=' + ma.toFixed(4) + ' kg/s';
+  setT('mw1b', mw1b.toFixed(1));
+  document.getElementById('mw1b_note').textContent = 'ΔHR_corr=' + dHR_c.toFixed(3) + ' g/kg × Ma=' + ma.toFixed(4) + ' kg/s';
+  setT('mw2', mw2.toFixed(1));
+  document.getElementById('mw2_note').textContent = 'Q=' + Q_air.toFixed(4) + ' kW ÷ h_w=' + h_water.toFixed(2) + ' kJ/kg';
+
+  document.getElementById('m2_box').textContent =
+    'Ma × Cpa × (T_in − T_out) = Mw × (h_fg + Cpw × (T_wb,in − T_w,in))\n' +
+    ma.toFixed(4) + ' × ' + Cpa + ' × (' + Tdb_in + ' − ' + Tdb_out + ') = Mw × (' + hfg + ' + ' + Cpw + ' × (' + Twb_in.toFixed(2) + ' − ' + Tw_in + '))\n' +
+    Q_air.toFixed(4) + ' kW = Mw × ' + h_water.toFixed(3) + ' kJ/kg\n' +
+    '→  Mw = ' + mw2.toFixed(1) + ' g/hr\n' +
+    'T_wb,in = ' + Twb_in.toFixed(2) + ' °C (altitude-corrected psychrometric iteration @ P=' + P.toFixed(2) + ' kPa)\n' +
+    (Math.abs(Twb_in-Tw_in)<0.5
+      ? 'T_wb,in ≈ T_w,in → C_pw term ≈ 0 → denominator ≈ h_fg only.'
+      : 'C_pw term = ' + (Cpw*(Twb_in-Tw_in)).toFixed(2) + ' kJ/kg (~' + ((Cpw*(Twb_in-Tw_in))/hfg*100).toFixed(1) + '% of h_fg)');
+
+  // Deviations
+  const dev1 = mw2>0 ? Math.abs(mw1a-mw2)/mw2*100 : 0;
+  const dev2 = mw2>0 ? Math.abs(mw1b-mw2)/mw2*100 : 0;
+  setT('dev1', dev1.toFixed(1)+'%');
+  document.getElementById('dev1').className = dev1<15?'val c-green':dev1<35?'val c-warn':'val c-red';
+  setT('dev2', dev2.toFixed(1)+'%');
+  document.getElementById('dev2').className = dev2<15?'val c-green':dev2<35?'val c-warn':'val c-red';
+
+  // Effectiveness
+  const dT     = Tdb_in - Tdb_out;
+  const dT_max = Tdb_in - Twb_in;
+  const eta    = dT_max>0 ? dT/dT_max*100 : 0;
+  setT('eta', eta.toFixed(1)+'%');
+  document.getElementById('eta').className = eta>=75?'val c-green':eta>=55?'val c-blue':'val c-warn';
+  setT('dT_val', dT.toFixed(1));
+  setT('dT_max', dT_max.toFixed(1));
+
+  // Supply check
+  const ratio = w_supply>0 ? mw1b/w_supply : 0;
+  setT('ws_val', w_supply.toFixed(0));
+  setT('we_val', mw1b.toFixed(1));
+  setT('ratio_val', (ratio*100).toFixed(1)+'%');
+  const bar = document.getElementById('bar_fill');
+  bar.style.width = Math.min(ratio*100,100)+'%';
+  bar.style.background = ratio<=1.05?'#1a6b3a':ratio<=1.30?'#92550a':'#b91c1c';
+  setT('supply_note',
+    ratio<=0.80 ? 'Evaporation well within supply — plausible reading.' :
+    ratio<=1.05 ? 'Evaporation close to supply — at sensible upper limit, plausible.' :
+    ratio<=1.30 ? 'Evaporation slightly exceeds supply — within measurement uncertainty, flag it.' :
+                  'Evaporation significantly exceeds supply — check readings or supply measurement.');
+
+  // Show results
+  document.getElementById('results_sec').style.display = 'block';
+  document.getElementById('results_sec').scrollIntoView({behavior:'smooth',block:'start'});
+  const s = document.getElementById('calc_status');
+  s.className = 'calc-status ok';
+  s.textContent = '✓ Done at '+new Date().toLocaleTimeString()+'  |  P='+P.toFixed(2)+' kPa · ρ='+rho.toFixed(4)+' kg/m³ · h_in='+h_in.toFixed(2)+' kJ/kg · T_wb,in='+Twb_in.toFixed(2)+'°C';
+}
+
+// ── Wire live preview inputs ───────────────────────────────────────────────
+['altitude','tdb_in','rh_in','tdb_out','rh_out','cpa','cpv','hfg0','va','dia','area','vel'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateDerived);
+});
+updateDerived();
+</script>
+</body>
+</html>

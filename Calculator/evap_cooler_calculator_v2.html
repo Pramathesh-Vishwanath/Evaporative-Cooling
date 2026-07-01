@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaporative Cooler Trial Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --surface-2: #f9f8f6;
+    --border: #e2e0d9;
+    --border-strong: #c8c5bc;
+    --text: #1a1916;
+    --text-sub: #5a5751;
+    --text-muted: #9a978f;
+    --accent: #2563a8;
+    --accent-bg: #eef3fb;
+    --accent-border: #b8d0ef;
+    --warn: #92550a;
+    --warn-bg: #fef3e2;
+    --warn-border: #f0c87a;
+    --ok: #1a6b3a;
+    --ok-bg: #eaf5ee;
+    --ok-border: #86d4a2;
+    --danger: #b91c1c;
+    --danger-bg: #fef2f2;
+    --mono: 'Courier New', Courier, monospace;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ── Header ── */
+  .header { border-bottom: 1.5px solid var(--border-strong); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+  .header h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.3px; }
+  .header p { color: var(--text-sub); font-size: 14px; margin-top: 4px; }
+
+  /* ── Nav tabs ── */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+  .tab { padding: 8px 18px; font-size: 14px; font-weight: 500; color: var(--text-sub); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; margin-bottom: -1px; border-radius: var(--radius) var(--radius) 0 0; transition: color .15s; }
+  .tab:hover { color: var(--text); background: var(--surface-2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── Sections ── */
+  .sec { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .sec-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .85rem; }
+
+  /* ── Grids ── */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+  @media(max-width:640px){ .g2,.g3,.g4{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:420px){ .g2,.g3,.g4{ grid-template-columns:1fr; } }
+
+  /* ── Fields ── */
+  .f { display: flex; flex-direction: column; gap: 4px; }
+  .f label { font-size: 12px; color: var(--text-sub); font-weight: 500; }
+  .f input {
+    width: 100%; padding: 7px 10px; font-size: 14px;
+    border: 1px solid var(--border-strong); border-radius: var(--radius);
+    background: var(--surface-2); color: var(--text);
+    transition: border-color .15s;
+  }
+  .f input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+  .f .hint { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 7px; border-radius: 20px; margin-top: 3px; }
+  .badge-ok { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok-border); }
+  .badge-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-border); }
+  .badge-info { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+  .input-warn { border-color: var(--warn-border) !important; }
+  .input-info { border-color: var(--accent-border) !important; }
+
+  /* ── Results ── */
+  .rl { font-size: 13px; font-weight: 600; color: var(--text-sub); margin: 1rem 0 .5rem; }
+  .mc { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: .85rem 1rem; }
+  .mc .label { font-size: 12px; color: var(--text-sub); margin-bottom: 3px; }
+  .mc .val { font-size: 22px; font-weight: 600; }
+  .mc .unit { font-size: 12px; color: var(--text-muted); }
+  .mc .note { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-family: var(--mono); }
+  .c-blue { color: var(--accent); }
+  .c-green { color: var(--ok); }
+  .c-warn { color: var(--warn); }
+  .c-red { color: var(--danger); }
+
+  hr.d { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  /* ── Formula box ── */
+  .fbox {
+    background: #f0f4fa; border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: .65rem 1rem; font-size: 12px; color: var(--text-sub);
+    font-family: var(--mono); line-height: 1.9; margin-top: .65rem;
+    white-space: pre-wrap; word-break: break-word;
+  }
+
+  /* ── Table ── */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: .5rem; }
+  .tbl th { font-size: 11px; font-weight: 600; color: var(--text-muted); text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  .tbl td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr.hi td { background: var(--warn-bg); }
+
+  /* ── Supply bar ── */
+  .bar-track { height: 8px; border-radius: 4px; background: var(--border); margin-top: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width .4s, background .4s; }
+
+  /* ── Theory tab ── */
+  .theory { max-width: 720px; }
+  .theory h2 { font-size: 18px; font-weight: 600; margin: 2rem 0 .5rem; padding-bottom: .3rem; border-bottom: 1px solid var(--border); }
+  .theory h2:first-child { margin-top: 0; }
+  .theory h3 { font-size: 15px; font-weight: 600; color: var(--text-sub); margin: 1.25rem 0 .35rem; }
+  .theory p { color: var(--text-sub); margin-bottom: .75rem; line-height: 1.75; }
+  .theory ul { color: var(--text-sub); padding-left: 1.25rem; margin-bottom: .75rem; }
+  .theory li { margin-bottom: .35rem; line-height: 1.7; }
+  .theory .eq { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .65rem 1rem; font-family: var(--mono); font-size: 13px; color: var(--text); margin: .5rem 0 .85rem; line-height: 2; }
+  .theory .callout { background: var(--accent-bg); border: 1px solid var(--accent-border); border-radius: var(--radius); padding: .75rem 1rem; font-size: 13px; color: var(--accent); margin: .75rem 0; }
+  .theory .callout-warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn); }
+  .theory table { width: 100%; border-collapse: collapse; font-size: 13px; margin: .5rem 0 1rem; }
+  .theory table th { background: var(--surface-2); font-weight: 600; text-align: left; padding: 6px 12px; border: 1px solid var(--border); }
+  .theory table td { padding: 6px 12px; border: 1px solid var(--border); color: var(--text-sub); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <h1>Evaporative Cooler Trial Calculator</h1>
+    <p>Calculates evaporation rate (two methods) · Saturation effectiveness · Outlet RH correction · Water supply check</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('calc')">Calculator</button>
+    <button class="tab" onclick="switchTab('theory')">Theory &amp; Formulas</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       CALCULATOR TAB
+  ═══════════════════════════════════════════════════ -->
+  <div id="tab-calc" class="tab-pane active">
+
+    <!-- FAN & AIR FLOW -->
+    <div class="sec">
+      <p class="sec-title">Fan &amp; Air Flow</p>
+      <div class="g4">
+        <div class="f">
+          <label>Sweep diameter (in)</label>
+          <input id="dia" type="number" value="9" step="0.1">
+          <span class="hint" id="area_hint">Area from diameter: —</span>
+        </div>
+        <div class="f">
+          <label>Sweep area (m²)</label>
+          <input id="area" type="number" value="0.041" step="0.001">
+        </div>
+        <div class="f">
+          <label>Flow velocity (m/s)</label>
+          <input id="vel" type="number" value="3.2" step="0.1">
+        </div>
+        <div class="f">
+          <label>Volume flow V<sub>a</sub> (m³/s)</label>
+          <input id="va" type="number" value="0.13133" step="0.00001">
+          <span class="hint" id="va_hint">From area×vel: —</span>
+        </div>
+      </div>
+      <div class="g4" style="margin-top:12px">
+        <div class="f">
+          <label>Air density ρ (kg/m³)</label>
+          <input id="rho" type="number" value="1.15" step="0.01">
+          <span class="hint">~1.15 at 28°C, ~1.20 at 20°C</span>
+        </div>
+        <div class="f">
+          <label>Mass flow M<sub>a</sub> (kg/s)</label>
+          <input id="ma" type="number" value="0.149" step="0.001">
+          <span class="hint" id="ma_hint">From V<sub>a</sub>×ρ: —</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- INLET CONDITIONS -->
+    <div class="sec">
+      <p class="sec-title">Inlet Conditions</p>
+      <div class="g4">
+        <div class="f">
+          <label>RH<sub>in</sub> (%)</label>
+          <input id="rh_in" type="number" value="70" step="0.1">
+          <span class="badge badge-ok">trusted sensor</span>
+        </div>
+        <div class="f">
+          <label>T<sub>db,in</sub> (°C) — dry-bulb</label>
+          <input id="tdb_in" type="number" value="28.4" step="0.1">
+        </div>
+        <div class="f">
+          <label>T<sub>wb,in</sub> (°C) — wet-bulb</label>
+          <input id="twb_in" type="number" value="24" step="0.1">
+        </div>
+        <div class="f">
+          <label>T<sub>dp,in</sub> (°C) — dew point</label>
+          <input id="tdp_in" type="number" value="22.4" step="0.1">
+        </div>
+      </div>
+      <div class="g4" style="margin-top:12px">
+        <div class="f">
+          <label>HR<sub>in</sub> (g/kg) — from RH<sub>in</sub></label>
+          <input id="hr_in" type="number" value="19.13" step="0.01" class="input-info">
+          <span class="badge badge-info">derived from RH<sub>in</sub></span>
+        </div>
+        <div class="f">
+          <label>h<sub>in</sub> (kJ/kg) — enthalpy</label>
+          <input id="h_in" type="number" value="77.43" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTLET CONDITIONS -->
+    <div class="sec">
+      <p class="sec-title">Outlet Conditions (measured)</p>
+      <div class="g4">
+        <div class="f">
+          <label>RH<sub>out</sub> (%)</label>
+          <input id="rh_out" type="number" value="90" step="0.1">
+          <span class="badge badge-warn">sensor drift likely</span>
+        </div>
+        <div class="f">
+          <label>T<sub>db,out</sub> (°C) — dry-bulb</label>
+          <input id="tdb_out" type="number" value="25.5" step="0.1">
+        </div>
+        <div class="f">
+          <label>T<sub>wb,out</sub> (°C) — wet-bulb</label>
+          <input id="twb_out" type="number" value="24.2" step="0.1">
+        </div>
+        <div class="f">
+          <label>T<sub>dp,out</sub> (°C) — dew point</label>
+          <input id="tdp_out" type="number" value="23.7" step="0.1">
+        </div>
+      </div>
+      <div class="g4" style="margin-top:12px">
+        <div class="f">
+          <label>HR<sub>out</sub> (g/kg) — from RH<sub>out</sub></label>
+          <input id="hr_out" type="number" value="20.80" step="0.01" class="input-warn">
+          <span class="badge badge-warn">suspect — use corrected value</span>
+        </div>
+        <div class="f">
+          <label>h<sub>out</sub> (kJ/kg) — measured enthalpy</label>
+          <input id="h_out" type="number" value="78.66" step="0.01">
+        </div>
+      </div>
+    </div>
+
+    <!-- WATER SUPPLY -->
+    <div class="sec">
+      <p class="sec-title">Water Supply</p>
+      <div class="g3">
+        <div class="f">
+          <label>Supply rate (g/hr)</label>
+          <input id="w_supply" type="number" value="300" step="10">
+          <span class="hint">Measured from tank/flowmeter</span>
+        </div>
+        <div class="f">
+          <label>T<sub>w,in</sub> — supply water temp (°C)</label>
+          <input id="tw_in" type="number" value="24" step="0.1">
+          <span class="hint">≈ T<sub>wb,in</sub> for open tank</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSTANTS -->
+    <div class="sec">
+      <p class="sec-title">Psychrometric Constants</p>
+      <div class="g4">
+        <div class="f">
+          <label>C<sub>p,a</sub> — sp. heat of air (kJ/kg·K)</label>
+          <input id="cpa" type="number" value="1.005" step="0.001">
+          <span class="hint">Standard: 1.005</span>
+        </div>
+        <div class="f">
+          <label>C<sub>p,v</sub> — sp. heat of vapour (kJ/kg·K)</label>
+          <input id="cpv" type="number" value="1.805" step="0.001">
+          <span class="hint">Standard: 1.805</span>
+        </div>
+        <div class="f">
+          <label>h<sub>fg</sub> — latent heat (kJ/kg)</label>
+          <input id="hfg" type="number" value="2440" step="1">
+          <span class="hint">≈2440 @ 25°C · 2501 @ 0°C</span>
+        </div>
+        <div class="f">
+          <label>C<sub>p,w</sub> — sp. heat of water (kJ/kg·K)</label>
+          <input id="cpw" type="number" value="4.18" step="0.01">
+          <span class="hint">Standard: 4.18</span>
+        </div>
+      </div>
+      <div class="g2" style="margin-top:12px">
+        <div class="f">
+          <label>h<sub>fg,0</sub> — latent heat at 0°C (kJ/kg)</label>
+          <input id="hfg0" type="number" value="2501" step="1">
+          <span class="hint">Used in enthalpy eq: h = C<sub>p,a</sub>·T + HR·(h<sub>fg,0</sub> + C<sub>p,v</sub>·T)</span>
+        </div>
+        <div class="f">
+          <label>Atmospheric pressure P (kPa)</label>
+          <input id="patm" type="number" value="101.325" step="0.1">
+          <span class="hint">101.325 at sea level · ~99.5 at ~300 m</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="sec">
+      <p class="sec-title">Results</p>
+
+      <!-- Outlet correction table -->
+      <p class="rl">Outlet correction — constant enthalpy (adiabatic) assumption</p>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Measured (from RH<sub>out</sub>)</th>
+            <th>Corrected (h = const, T<sub>db,out</sub> trusted)</th>
+            <th>Difference</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>HR<sub>out</sub> (g/kg)</td>
+            <td id="r_hr_m">—</td>
+            <td id="r_hr_c" class="c-blue">—</td>
+            <td id="r_hr_d">—</td>
+          </tr>
+          <tr class="hi">
+            <td>RH<sub>out</sub> (%)</td>
+            <td id="r_rh_m">—</td>
+            <td id="r_rh_c" class="c-green">—</td>
+            <td id="r_rh_d">—</td>
+          </tr>
+          <tr>
+            <td>h<sub>out</sub> (kJ/kg)</td>
+            <td id="r_h_m">—</td>
+            <td id="r_h_c">—</td>
+            <td id="r_h_d">—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="fbox" id="corr_eq">—</div>
+
+      <hr class="d">
+
+      <!-- Evaporation rate — three methods -->
+      <p class="rl">Water evaporation rate</p>
+      <div class="g3">
+        <div class="mc">
+          <div class="label">Method 1a — ΔHR<sub>measured</sub> × M<sub>a</sub></div>
+          <div class="val c-blue" id="mw1a">—</div>
+          <div class="unit">g/hr</div>
+          <div class="note" id="mw1a_note">—</div>
+        </div>
+        <div class="mc">
+          <div class="label">Method 1b — ΔHR<sub>corrected</sub> × M<sub>a</sub></div>
+          <div class="val c-green" id="mw1b">—</div>
+          <div class="unit">g/hr</div>
+          <div class="note" id="mw1b_note">—</div>
+        </div>
+        <div class="mc">
+          <div class="label">Method 2 — Sensible heat balance</div>
+          <div class="val" id="mw2">—</div>
+          <div class="unit">g/hr</div>
+          <div class="note" id="mw2_note">—</div>
+        </div>
+      </div>
+      <div class="fbox" id="m2_box">—</div>
+
+      <hr class="d">
+
+      <!-- Convergence & effectiveness -->
+      <p class="rl">Convergence &amp; Effectiveness</p>
+      <div class="g3">
+        <div class="mc">
+          <div class="label">M1a vs M2 — deviation</div>
+          <div class="val" id="dev1">—</div>
+          <div class="unit">%</div>
+        </div>
+        <div class="mc">
+          <div class="label">M1b vs M2 — deviation</div>
+          <div class="val" id="dev2">—</div>
+          <div class="unit">%</div>
+          <div class="note">Lower = better correction</div>
+        </div>
+        <div class="mc">
+          <div class="label">Saturation effectiveness η</div>
+          <div class="val" id="eta">—</div>
+          <div class="unit">%  (ΔT = <span id="dT_val">—</span> / <span id="dT_max">—</span> °C)</div>
+        </div>
+      </div>
+
+      <hr class="d">
+
+      <!-- Water supply check -->
+      <p class="rl">Water supply check</p>
+      <div class="g3">
+        <div class="mc">
+          <div class="label">Supply rate</div>
+          <div class="val" id="ws_val">—</div>
+          <div class="unit">g/hr</div>
+        </div>
+        <div class="mc">
+          <div class="label">Evap rate (M1b — best estimate)</div>
+          <div class="val" id="we_val">—</div>
+          <div class="unit">g/hr</div>
+        </div>
+        <div class="mc">
+          <div class="label">Evap / Supply ratio</div>
+          <div class="val" id="ratio_val">—</div>
+          <div class="unit" id="ratio_unit">—</div>
+        </div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="bar_fill" style="width:0%"></div></div>
+      <p class="hint" id="supply_note" style="margin-top:6px">—</p>
+    </div>
+
+  </div><!-- end tab-calc -->
+
+
+  <!-- ═══════════════════════════════════════════════════
+       THEORY TAB
+  ═══════════════════════════════════════════════════ -->
+  <div id="tab-theory" class="tab-pane">
+  <div class="theory">
+
+    <h2>What is an evaporative cooler?</h2>
+    <p>An evaporative cooler (also called a swamp cooler or desert cooler) lowers air temperature by passing hot dry air through a wet pad. Water evaporates from the pad surface, absorbing heat from the air as latent heat of vaporisation. The air exits cooler and more humid. No refrigerant is used — the energy comes entirely from the air itself.</p>
+    <p>The process works best in hot, dry climates. In high-humidity conditions, the air is already close to saturation and cannot absorb much more moisture, so cooling is limited.</p>
+
+    <h2>The adiabatic saturation process</h2>
+    <p>In an ideal evaporative cooler, <strong>no heat is exchanged with the surroundings</strong> — all the energy for evaporation comes from the sensible heat of the air stream. This is called an <em>adiabatic</em> process. The key consequence:</p>
+    <div class="eq">h_out ≈ h_in   (enthalpy is conserved)</div>
+    <p>In practice, enthalpy drops slightly (by ~0.5–2 kJ/kg) because the cooler housing loses some heat to the surroundings and the incoming water carries a small amount of enthalpy out as liquid. This is why we say "approximately" constant enthalpy.</p>
+
+    <h2>Psychrometric variables — quick reference</h2>
+    <table>
+      <tr><th>Symbol</th><th>Name</th><th>Typical unit</th><th>What it means</th></tr>
+      <tr><td>T<sub>db</sub></td><td>Dry-bulb temperature</td><td>°C</td><td>Ordinary air temperature</td></tr>
+      <tr><td>T<sub>wb</sub></td><td>Wet-bulb temperature</td><td>°C</td><td>Temperature a wet surface cools to by evaporation; the theoretical minimum outlet temp for an evap cooler</td></tr>
+      <tr><td>T<sub>dp</sub></td><td>Dew-point temperature</td><td>°C</td><td>Temperature at which air becomes saturated (100% RH)</td></tr>
+      <tr><td>RH</td><td>Relative humidity</td><td>%</td><td>Ratio of actual vapour pressure to saturation pressure</td></tr>
+      <tr><td>HR</td><td>Humidity ratio (specific humidity)</td><td>g/kg or kg/kg</td><td>Mass of water vapour per kg of dry air</td></tr>
+      <tr><td>h</td><td>Specific enthalpy of moist air</td><td>kJ/kg</td><td>Total energy content per kg of dry air</td></tr>
+    </table>
+
+    <h2>Key formulas</h2>
+
+    <h3>1. Saturation pressure (Antoine equation approximation)</h3>
+    <p>The saturation vapour pressure at temperature T (°C):</p>
+    <div class="eq">P_sat(T) = 0.6108 × exp( 17.27 × T / (T + 237.3) )   [kPa]</div>
+
+    <h3>2. Humidity ratio from RH</h3>
+    <div class="eq">HR = 0.622 × (RH/100 × P_sat) / (P_atm − RH/100 × P_sat)   [kg/kg]
+HR_g = HR × 1000   [g/kg]</div>
+    <p>Since RH<sub>in</sub> is from the trusted inlet sensor, HR<sub>in</sub> derived this way is also reliable. HR<sub>out,measured</sub> from the outlet sensor is suspect — capacitive RH sensors drift at high humidity (&gt;85%).</p>
+
+    <h3>3. Specific enthalpy of moist air</h3>
+    <div class="eq">h = C<sub>p,a</sub> × T<sub>db</sub> + HR × (h<sub>fg,0</sub> + C<sub>p,v</sub> × T<sub>db</sub>)   [kJ/kg dry air]
+
+Where:
+  C<sub>p,a</sub>  = 1.005 kJ/kg·K  (specific heat of dry air)
+  C<sub>p,v</sub>  = 1.805 kJ/kg·K  (specific heat of water vapour)
+  h<sub>fg,0</sub> = 2501  kJ/kg     (latent heat of vaporisation at 0°C)</div>
+
+    <h3>4. Mass flow rate of air</h3>
+    <div class="eq">V<sub>a</sub> = A × v             [m³/s]  (volume flow = sweep area × velocity)
+M<sub>a</sub> = V<sub>a</sub> × ρ<sub>a</sub>       [kg/s]  (mass flow = volume flow × air density)</div>
+
+    <h2>Outlet RH correction (no psychrometric chart needed)</h2>
+    <p>Since T<sub>db,out</sub> from the thermometer is reliable but RH<sub>out</sub> from the humidity sensor is not, we reconstruct the true outlet state using the adiabatic assumption (h = const) and the known T<sub>db,out</sub>:</p>
+
+    <div class="callout"><strong>Step 1 — Solve for corrected HR<sub>out</sub>:</strong><br>
+    Set h<sub>out</sub> = h<sub>in</sub> in the enthalpy equation and solve for HR:</div>
+    <div class="eq">HR<sub>corr</sub> = (h<sub>in</sub> − C<sub>p,a</sub> × T<sub>db,out</sub>) / (h<sub>fg,0</sub> + C<sub>p,v</sub> × T<sub>db,out</sub>)   [kg/kg]</div>
+
+    <div class="callout"><strong>Step 2 — Get corrected RH<sub>out</sub>:</strong><br>
+    Use the psychrometric RH formula with the corrected HR and P<sub>sat</sub> at T<sub>db,out</sub>:</div>
+    <div class="eq">RH<sub>corr</sub> = HR<sub>corr</sub> × P<sub>atm</sub> / ((0.622 + HR<sub>corr</sub>) × P<sub>sat</sub>(T<sub>db,out</sub>)) × 100   [%]</div>
+
+    <p>This is pure algebra — no psychrometric chart is needed. The chart would give the same answer visually: find h<sub>in</sub> on the chart, follow that constant-enthalpy line until it crosses T<sub>db,out</sub>, and read off the resulting RH and HR at that intersection point.</p>
+
+    <h2>Method 1 — Humidity ratio difference</h2>
+    <p>The moisture picked up by the air stream equals the mass of water evaporated. If we know how much the humidity ratio increases and how much air flows through:</p>
+    <div class="eq">M<sub>w,evap</sub> = (HR<sub>out</sub> − HR<sub>in</sub>) × M<sub>a</sub>   [kg water / s]
+
+Convert to g/hr:  × 1000 × 3600</div>
+    <p><strong>Method 1a</strong> uses the measured HR<sub>out</sub> (from the suspect RH sensor) — likely to overestimate.</p>
+    <p><strong>Method 1b</strong> uses the corrected HR<sub>out</sub> (from the h = const calculation) — more reliable.</p>
+
+    <h2>Method 2 — Sensible heat balance</h2>
+    <p>The sensible heat lost by the air (it cools from T<sub>in</sub> to T<sub>out</sub>) must equal the latent + sensible heat absorbed by the evaporating water. The full energy balance:</p>
+    <div class="eq">M<sub>a</sub> × C<sub>p,a</sub> × (T<sub>db,in</sub> − T<sub>db,out</sub>) = M<sub>w,evap</sub> × (h<sub>fg</sub> + C<sub>p,w</sub> × (T<sub>wb,in</sub> − T<sub>w,in</sub>))
+
+Solving for M<sub>w,evap</sub>:
+M<sub>w,evap</sub> = [M<sub>a</sub> × C<sub>p,a</sub> × (T<sub>in</sub> − T<sub>out</sub>)] / [h<sub>fg</sub> + C<sub>p,w</sub> × (T<sub>wb,in</sub> − T<sub>w,in</sub>)]
+
+Where:
+  h<sub>fg</sub>   ≈ 2440 kJ/kg  (latent heat of vaporisation at ~25°C)
+  C<sub>p,w</sub>  = 4.18 kJ/kg·K (specific heat of water)
+  T<sub>w,in</sub> = temperature of incoming water supply (≈ T<sub>wb,in</sub> for open tank)</div>
+
+    <div class="callout callout-warn"><strong>Note on T<sub>w,in</sub>:</strong> If the supply water temperature equals T<sub>wb,in</sub>, the C<sub>p,w</sub> term becomes zero and the denominator simplifies to just h<sub>fg</sub>. This is the standard adiabatic approximation. The water sensible heat term is only ~4% of h<sub>fg</sub> anyway, so ignoring it introduces minimal error.</div>
+
+    <h2>Why the two methods don't always agree</h2>
+    <p>In a perfect adiabatic cooler, both methods should give the same answer. Deviations arise from:</p>
+    <ul>
+      <li><strong>RH sensor drift</strong> at high humidity — the biggest source of error. The outlet sensor reads higher than reality at RH &gt; 85%, inflating HR<sub>out</sub> and M<sub>w,evap</sub> in Method 1a.</li>
+      <li><strong>Small heat losses</strong> to surroundings — causes a real (small) enthalpy drop across the cooler, slightly breaking the adiabatic assumption.</li>
+      <li><strong>Temperature sensor placement</strong> — if the outlet thermometer is not fully mixed with the air stream, T<sub>db,out</sub> may not represent the true mean.</li>
+    </ul>
+    <p>Method 1b (corrected HR) and Method 2 should agree within ~10–15% for a valid trial. Large deviations (&gt;30%) suggest a problematic reading that should be flagged.</p>
+
+    <h2>Saturation effectiveness</h2>
+    <p>This is the standard metric for comparing evaporative cooler performance across different setups and weather conditions. It is normalised against the maximum possible cooling, making it weather-independent:</p>
+    <div class="eq">η = (T<sub>db,in</sub> − T<sub>db,out</sub>) / (T<sub>db,in</sub> − T<sub>wb,in</sub>) × 100   [%]</div>
+    <p>The denominator is the maximum possible temperature drop — limited by the wet-bulb temperature of the incoming air. A perfect cooler (outlet fully saturated at T<sub>wb,in</sub>) would give η = 100%.</p>
+    <p>Typical values: 70–85% for commercial pad coolers, 55–70% for basic setups.</p>
+    <p>Two different setups in different weather can be compared fairly on η alone — a setup with η = 78% on a dry day and η = 78% on a humid day is performing consistently.</p>
+
+    <h2>Water supply sanity check</h2>
+    <p>The calculated evaporation rate should not significantly exceed the measured water supply rate — water cannot evaporate if it wasn't supplied. A small excess (up to ~10%) is acceptable given measurement uncertainty. A large excess (&gt;30%) suggests the evaporation rate calculation has an error, usually from an inflated HR<sub>out</sub>.</p>
+
+    <h2>Symbol table</h2>
+    <table>
+      <tr><th>Symbol</th><th>Meaning</th><th>Unit</th></tr>
+      <tr><td>M<sub>a</sub></td><td>Mass flow rate of dry air</td><td>kg/s</td></tr>
+      <tr><td>M<sub>w,evap</sub></td><td>Rate of water evaporation</td><td>g/hr</td></tr>
+      <tr><td>V<sub>a</sub></td><td>Volume flow rate of air</td><td>m³/s</td></tr>
+      <tr><td>ρ<sub>a</sub></td><td>Density of air</td><td>kg/m³</td></tr>
+      <tr><td>C<sub>p,a</sub></td><td>Specific heat of dry air</td><td>kJ/kg·K</td></tr>
+      <tr><td>C<sub>p,v</sub></td><td>Specific heat of water vapour</td><td>kJ/kg·K</td></tr>
+      <tr><td>C<sub>p,w</sub></td><td>Specific heat of liquid water</td><td>kJ/kg·K</td></tr>
+      <tr><td>h<sub>fg</sub></td><td>Latent heat of vaporisation at ~25°C</td><td>kJ/kg</td></tr>
+      <tr><td>h<sub>fg,0</sub></td><td>Latent heat of vaporisation at 0°C</td><td>kJ/kg</td></tr>
+      <tr><td>HR</td><td>Humidity ratio (specific humidity)</td><td>g/kg or kg/kg</td></tr>
+      <tr><td>RH</td><td>Relative humidity</td><td>%</td></tr>
+      <tr><td>P<sub>sat</sub></td><td>Saturation vapour pressure</td><td>kPa</td></tr>
+      <tr><td>P<sub>atm</sub></td><td>Atmospheric pressure</td><td>kPa</td></tr>
+      <tr><td>T<sub>db</sub></td><td>Dry-bulb temperature</td><td>°C</td></tr>
+      <tr><td>T<sub>wb</sub></td><td>Wet-bulb temperature</td><td>°C</td></tr>
+      <tr><td>T<sub>w,in</sub></td><td>Incoming water supply temperature</td><td>°C</td></tr>
+      <tr><td>η</td><td>Saturation effectiveness</td><td>%</td></tr>
+    </table>
+
+  </div>
+  </div><!-- end tab-theory -->
+
+</div><!-- end page -->
+
+<script>
+// ── Tab switching ──────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Helpers ────────────────────────────────────────────────────
+const g = id => parseFloat(document.getElementById(id).value) || 0;
+const set = (id, v) => { document.getElementById(id).textContent = v; };
+const setHTML = (id, v) => { document.getElementById(id).innerHTML = v; };
+const cls = (id, c) => { document.getElementById(id).className = 'val ' + c; };
+
+function psat(T) {
+  // Antoine approximation, returns kPa
+  return 0.6108 * Math.exp(17.27 * T / (T + 237.3));
+}
+
+// ── Main calculation ───────────────────────────────────────────
+function calc() {
+  // Inputs
+  const dia    = g('dia');
+  const area   = g('area');
+  const vel    = g('vel');
+  const va     = g('va');
+  const rho    = g('rho');
+  const ma     = g('ma');
+  const cpa    = g('cpa');
+  const cpv    = g('cpv');
+  const hfg    = g('hfg');
+  const cpw    = g('cpw');
+  const hfg0   = g('hfg0');
+  const P      = g('patm');
+
+  const rh_in  = g('rh_in');
+  const tdb_in = g('tdb_in');
+  const twb_in = g('twb_in');
+  const hr_in  = g('hr_in');
+  const h_in   = g('h_in');
+
+  const rh_out  = g('rh_out');
+  const tdb_out = g('tdb_out');
+  const twb_out = g('twb_out');
+  const hr_out  = g('hr_out');
+  const h_out   = g('h_out');
+
+  const tw_in    = g('tw_in');
+  const w_supply = g('w_supply');
+
+  // ── Fan hints
+  const area_from_dia = Math.PI / 4 * Math.pow(dia * 0.0254, 2);
+  document.getElementById('area_hint').textContent = 'From diameter: ' + area_from_dia.toFixed(4) + ' m²';
+  document.getElementById('va_hint').textContent   = 'From area×vel: ' + (area * vel).toFixed(5) + ' m³/s';
+  document.getElementById('ma_hint').textContent   = 'From Va×ρ: ' + (va * rho).toFixed(4) + ' kg/s';
+
+  // ── Correction: h = const, solve for HR_corr
+  // h = Cp_a * T + HR * (hfg0 + Cp_v * T)  =>  HR = (h - Cp_a*T) / (hfg0 + Cp_v*T)
+  const hr_corr_kgkg = (h_in - cpa * tdb_out) / (hfg0 + cpv * tdb_out);  // kg/kg
+  const hr_corr      = hr_corr_kgkg * 1000;  // g/kg
+
+  // ── RH from HR: RH = HR * P / ((0.622 + HR) * Psat) * 100
+  const ps_out       = psat(tdb_out);
+  const rh_corr_calc = hr_corr_kgkg * P / ((0.622 + hr_corr_kgkg) * ps_out) * 100;
+
+  const dh = h_out - h_in;
+
+  // ── Fill correction table
+  set('r_hr_m', hr_out.toFixed(2) + ' g/kg');
+  set('r_hr_c', hr_corr.toFixed(2) + ' g/kg');
+  set('r_hr_d', (hr_corr - hr_out >= 0 ? '+' : '') + (hr_corr - hr_out).toFixed(2) + ' g/kg');
+  set('r_rh_m', rh_out.toFixed(1) + '%');
+  set('r_rh_c', rh_corr_calc.toFixed(1) + '%');
+  set('r_rh_d', (rh_corr_calc - rh_out >= 0 ? '+' : '') + (rh_corr_calc - rh_out).toFixed(1) + '%');
+  set('r_h_m', h_out.toFixed(2) + ' kJ/kg');
+  set('r_h_c', h_in.toFixed(2) + ' kJ/kg (= h_in)');
+  set('r_h_d', (dh >= 0 ? '+' : '') + dh.toFixed(3) + ' kJ/kg');
+
+  document.getElementById('corr_eq').textContent =
+    'Step 1 — Rearrange enthalpy eq for HR:\n' +
+    '  HR_corr = (h_in - Cp,a × T_db,out) / (h_fg,0 + Cp,v × T_db,out)\n' +
+    '          = (' + h_in + ' - ' + cpa + '×' + tdb_out + ') / (' + hfg0 + ' + ' + cpv + '×' + tdb_out + ')\n' +
+    '          = ' + hr_corr.toFixed(4) + ' g/kg\n\n' +
+    'Step 2 — Antoine eq: Psat(' + tdb_out + '°C) = ' + ps_out.toFixed(4) + ' kPa\n\n' +
+    'Step 3 — Psychrometric RH formula:\n' +
+    '  RH_corr = HR_corr × P / ((0.622 + HR_corr) × Psat) × 100\n' +
+    '          = ' + rh_corr_calc.toFixed(1) + '%\n\n' +
+    'No psychrometric chart used — pure algebra.';
+
+  // ── Method 1a: measured HR
+  const dhr_m = hr_out - hr_in;
+  const mw1a  = (dhr_m / 1000) * ma * 3600 * 1000;  // g/hr
+
+  // ── Method 1b: corrected HR
+  const dhr_c = hr_corr - hr_in;
+  const mw1b  = (dhr_c / 1000) * ma * 3600 * 1000;  // g/hr
+
+  // ── Method 2: Ma * Cp,a * (Tin - Tout) = Mw * (hfg + Cp,w * (Twb,in - Tw,in))
+  const Q_air   = ma * cpa * (tdb_in - tdb_out);  // kW
+  const h_water = hfg + cpw * (twb_in - tw_in);   // kJ/kg
+  const mw2     = h_water > 0 ? (Q_air / h_water) * 3600 * 1000 : 0;  // g/hr
+
+  // ── Fill evaporation cards
+  set('mw1a', mw1a.toFixed(1));
+  document.getElementById('mw1a_note').textContent = 'ΔHR = ' + dhr_m.toFixed(2) + ' g/kg × Ma × 3600';
+  set('mw1b', mw1b.toFixed(1));
+  document.getElementById('mw1b_note').textContent = 'ΔHR_corr = ' + dhr_c.toFixed(2) + ' g/kg × Ma × 3600';
+  set('mw2', mw2.toFixed(1));
+  document.getElementById('mw2_note').textContent = 'Q = ' + Q_air.toFixed(4) + ' kW  ÷  h_water = ' + h_water.toFixed(2) + ' kJ/kg';
+
+  document.getElementById('m2_box').textContent =
+    'Ma × Cp,a × (T_in − T_out) = Mw × (h_fg + Cp,w × (T_wb,in − T_w,in))\n' +
+    ma + ' × ' + cpa + ' × (' + tdb_in + ' − ' + tdb_out + ') = Mw × (' + hfg + ' + ' + cpw + ' × (' + twb_in + ' − ' + tw_in + '))\n' +
+    Q_air.toFixed(4) + ' = Mw × ' + h_water.toFixed(2) + '  →  Mw = ' + mw2.toFixed(1) + ' g/hr\n' +
+    (Math.abs(twb_in - tw_in) < 0.1
+      ? 'T_wb,in ≈ T_w,in → Cp,w term = 0 → denominator = h_fg only.'
+      : 'Cp,w term = ' + (cpw * (twb_in - tw_in)).toFixed(2) + ' kJ/kg (~' + ((cpw * (twb_in - tw_in)) / hfg * 100).toFixed(1) + '% of h_fg)');
+
+  // ── Deviations
+  const dev1 = mw2 > 0 ? Math.abs(mw1a - mw2) / mw2 * 100 : 0;
+  const dev2 = mw2 > 0 ? Math.abs(mw1b - mw2) / mw2 * 100 : 0;
+  set('dev1', dev1.toFixed(1) + '%');
+  document.getElementById('dev1').className = dev1 < 15 ? 'val c-green' : dev1 < 35 ? 'val c-warn' : 'val c-red';
+  set('dev2', dev2.toFixed(1) + '%');
+  document.getElementById('dev2').className = dev2 < 15 ? 'val c-green' : dev2 < 35 ? 'val c-warn' : 'val c-red';
+
+  // ── Effectiveness
+  const dT     = tdb_in - tdb_out;
+  const dT_max = tdb_in - twb_in;
+  const eta    = dT_max > 0 ? dT / dT_max * 100 : 0;
+  set('eta', eta.toFixed(1) + '%');
+  document.getElementById('eta').className = eta >= 75 ? 'val c-green' : eta >= 55 ? 'val c-blue' : 'val c-warn';
+  set('dT_val', dT.toFixed(1));
+  set('dT_max', dT_max.toFixed(1));
+
+  // ── Water supply check
+  const ratio = w_supply > 0 ? mw1b / w_supply : 0;
+  set('ws_val', w_supply.toFixed(0));
+  set('we_val', mw1b.toFixed(1));
+  set('ratio_val', (ratio * 100).toFixed(1) + '%');
+
+  const bar = document.getElementById('bar_fill');
+  const pct = Math.min(ratio * 100, 100);
+  bar.style.width = pct + '%';
+  bar.style.background = ratio <= 1.05 ? '#1a6b3a' : ratio <= 1.3 ? '#92550a' : '#b91c1c';
+
+  let note = '';
+  if      (ratio <= 0.80) note = 'Evaporation well within supply — plausible reading.';
+  else if (ratio <= 1.05) note = 'Evaporation close to supply — at the sensible upper limit, plausible.';
+  else if (ratio <= 1.30) note = 'Evaporation slightly exceeds supply — within measurement uncertainty, but flag it.';
+  else                    note = 'Evaporation significantly exceeds supply — check readings or supply rate measurement.';
+  set('supply_note', note);
+}
+
+// ── Wire all inputs
+document.querySelectorAll('input[type="number"]').forEach(el => el.addEventListener('input', calc));
+calc();
+</script>
+</body>
+</html>
