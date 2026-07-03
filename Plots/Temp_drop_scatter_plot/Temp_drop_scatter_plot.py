@@ -10,72 +10,70 @@ plt.style.use(['science', 'no-latex'])
 # ==========================================
 # 2. ENTER YOUR ACTUAL EXPERIMENTAL DATA HERE
 # ==========================================
-
 # Format: (X_value, Y_value)
 # Where X = T_db,in - T_wb,in
 # Where Y = T_db,in - T_db,out
 
 data_setup_A = [
-#    (5.33, 5.7),
-   (3.76, 2.3),
-   (4.16, 3.1),
-   (4.1, 3),
-   (4.33, 2.8),
-   (3.76, 2.5),
-   (3.82, 3.3),
-   (4.1, 3.6),
-   (4.03, 2.9),
-   (3.33, 3),
-#    (3.47, 3.7),
-   (3.96, 3.7),
-   (4.07, 2.6),
-   (4.36, 3.4),
-   (4.1, 3.95),
-#    (3.93, 4.7),
-   (8.44, 8.1),
-   (8.46, 7.6)
-    
+    (4.1, 2.8),
+    (4.33, 2.8),
+    (3.76, 2.5),
+    (3.82, 2.9),
+    (4.1, 3)
 ]
 
-# data_setup_B = [
-#     (5.0, 3.0),
-#     (7.2, 4.1),
-#     (9.8, 5.5),
-#     (12.1, 7.3),
-#     (15.3, 9.0),
-    
+data_setup_B = [
+    (4.03, 3.2),
+    (3.33, 2.9),
+    (3.47, 3),
+    (3.76, 3.1)
+]
+
+data_setup_C = [
+    (4.07, 3.2),
+    (4.36, 3.8),
+    (3.93, 3.6),
+    (3.93, 3.7)
+]
+
+data_setup_D = [
+    (8.44, 8),
+    (12.9, 12.6),
+    (8.46, 7.8)
+]
+
+# data_setup_E = [
+#     # (3.6, 2.5), (4.3, 3.5), (4.2, 3.2), (8.2, 7.5)  # Enter points for Case 5 here
 # ]
 
-# data_setup_C = [
-#     (4.5, 1.8),
-#     (6.1, 2.2),
-#     (8.9, 4.0),
-#     (11.5, 4.5),
-#     (13.8, 6.1),
-    
-# ]
-
-# --- Processing data into DataFrames (leave this as is) ---
+# --- Processing data into DataFrames ---
 df_A = pd.DataFrame(data_setup_A, columns=['X', 'Y'])
-df_A['Setup'] = 'Setup A Name'  # Change to your actual setup label
+df_A['Setup'] = 'Without Guide Vanes'  # Change to your actual setup label
 
-# df_B = pd.DataFrame(data_setup_B, columns=['X', 'Y'])
-# df_B['Setup'] = 'Setup B Name'  # Change to your actual setup label
+df_B = pd.DataFrame(data_setup_B, columns=['X', 'Y'])
+df_B['Setup'] = 'With Guide Vanes'  # Change to your actual setup label
 
-# df_C = pd.DataFrame(data_setup_C, columns=['X', 'Y'])
-# df_C['Setup'] = 'Setup C Name'  # Change to your actual setup label
+df_C = pd.DataFrame(data_setup_C, columns=['X', 'Y'])
+df_C['Setup'] = 'Guide vanes + Grills'  # Change to your actual setup label
 
-dataset = pd.concat([df_A], ignore_index=True)
+df_D = pd.DataFrame(data_setup_D, columns=['X', 'Y'])
+df_D['Setup'] = 'Guide vanes + Grills, Heasted Inlet'  # Change to your actual setup label
+
+# df_E = pd.DataFrame(data_setup_E, columns=['X', 'Y'])
+# df_E['Setup'] = 'Setup E Name'  # Change to your actual setup label
+
+# Combine all 5 datasets into one master dataframe
+dataset = pd.concat([df_A, df_B, df_C, df_D], ignore_index=True)
 
 # ==========================================
 # 3. PLOTTING THE CHART
 # ==========================================
 fig, ax = plt.subplots(figsize=(6, 4.5), dpi=300)
 
-# Define distinct, publication-friendly markers and colors
+# Expanded to 5 unique publication-friendly colors and markers
 setups = dataset['Setup'].unique()
-colors = ['#0C5DA5', '#00B945', '#FF9500'] # High contrast palette
-markers = ['o', 's', '^']                  # Circle, Square, Triangle
+colors = ['#0C5DA5', '#00B945', '#FF9500', '#FF2C00']  # Blue, Green, Orange, Red
+markers = ['o', 's', '^', 'v', 'D']                              # Circle, Square, Triangle-Up, Triangle-Down, Diamond
 
 for i, setup in enumerate(setups):
     subset = dataset[dataset['Setup'] == setup]
@@ -90,17 +88,17 @@ for i, setup in enumerate(setups):
     )
 
 # 4. ADD THE STANDARD ADIABATIC REFERENCE LINE (Slope = eta)
-# Let's assume your baseline target design effectiveness is eta = 0.70
 eta_target = 1
 x_vals = np.array([0, dataset['X'].max() + 2])
 y_vals = eta_target * x_vals
 
+# Using an rf string to prevent syntax escape sequence warnings with \eta
 ax.plot(
     x_vals, y_vals, 
     color='black', 
     linestyle='--', 
     linewidth=1.2, 
-    label=f'($\eta$ = 100%) line'
+    label=rf'($\eta$ = 100%) line'
 )
 
 # 5. REFINED LABELS AND AXES TUNING
@@ -112,15 +110,20 @@ ax.set_title('Actual Temperature Drop vs Maximum Possible Temperature Drop', fon
 ax.set_xlim(0, 12)
 ax.set_ylim(0, 12)
 
+# [Put this immediately after your ax.set_ylim(0, 12) line]
+
 # Add clear grid lines suited for quantitative evaluation
 ax.grid(True, linestyle=':', alpha=0.6)
 
-# Position legend in an open spot (usually lower right or upper left depending on data slope)
+# Position legend in the upper left corner
 ax.legend(loc='upper left', frameon=True, facecolor='white', edgecolor='none', fontsize=8)
 
 # 6. EXPORTING FOR YOUR REPORT
-# Always save as PDF or SVG vector format so lines and text never pixelate in your final document
+# These lines physically write the image files to your workspace folder
 plt.savefig('temperature_drop_scatter.pdf', bbox_inches='tight')
 plt.savefig('temperature_drop_scatter.svg', bbox_inches='tight')
 
-print("Plot successfully generated and saved as high-resolution vector graphics (PDF/SVG)!")
+# Optional: Displays the interactive window on your monitor when executed
+plt.show()
+
+print("Plot successfully generated and saved as PDF/SVG vector graphics!")
