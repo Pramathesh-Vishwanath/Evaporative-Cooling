@@ -15,31 +15,25 @@ plt.style.use(['science', 'no-latex'])
 # Where Y = T_db,in - T_db,out
 
 data_setup_A = [
-    (4.1, 2.8),
+    (4.1, 3),
     (4.33, 2.8),
-    (3.76, 2.5),
-    (3.82, 2.9),
-    (4.1, 3)
+    (3.76, 2.5)
 ]
 
 data_setup_B = [
-    (4.03, 3.2),
-    (3.33, 2.9),
-    (3.47, 3),
-    (3.76, 3.1)
+    (4.03, 2.9),
+    (3.33, 3)
 ]
 
 data_setup_C = [
-    (4.07, 3.2),
-    (4.36, 3.8),
-    (3.93, 3.6),
-    (3.93, 3.7)
+    (4.07, 2.6),
+    (4.36, 3.4)
 ]
 
 data_setup_D = [
-    (8.44, 8),
-    (12.9, 12.6),
-    (8.46, 7.8)
+    (8.44, 8.1),
+    # (12.9, 13.6),
+    (8.46, 7.6)
 ]
 
 # data_setup_E = [
@@ -57,7 +51,7 @@ df_C = pd.DataFrame(data_setup_C, columns=['X', 'Y'])
 df_C['Setup'] = 'Guide vanes + Grills'  # Change to your actual setup label
 
 df_D = pd.DataFrame(data_setup_D, columns=['X', 'Y'])
-df_D['Setup'] = 'Guide vanes + Grills, Heasted Inlet'  # Change to your actual setup label
+df_D['Setup'] = 'Guide vanes + Grills, Heated Inlet'  # Change to your actual setup label
 
 # df_E = pd.DataFrame(data_setup_E, columns=['X', 'Y'])
 # df_E['Setup'] = 'Setup E Name'  # Change to your actual setup label

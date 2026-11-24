@@ -38,8 +38,8 @@ ax.scatter(
 
 # 4. REFINED AXES, TYPOGRAPHY, AND BOUNDS
 ax.set_xlabel(r'Air Velocity, $V$ (m/s)', fontsize=10)
-ax.set_ylabel(r'Cooling Effectiveness, $\eta$ (\%)', fontsize=10)
-ax.set_title('Effectiveness vs Fan Velocity', fontsize=11, pad=12, fontweight='bold')
+ax.set_ylabel(r'Saturation Effectiveness, $\eta$ (%)', fontsize=10)
+ax.set_title('Saturation Effectiveness vs Fan Velocity', fontsize=11, pad=12, fontweight='bold')
 
 # Give the percentage scale a clean standard boundary range
 ax.set_ylim(50, 100)
